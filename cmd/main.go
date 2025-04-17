@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+
 	"github.com/lastvoidtemplar/sabbac/internal/logger"
 	"github.com/lastvoidtemplar/sabbac/internal/spectrogram"
 )
@@ -19,5 +21,7 @@ func main() {
 	// }
 
 	wavePath := "downloads/SABATON - The Valley Of Death (Official Lyric Video).wav"
-	spectrogram.NewSpectrogram(wavePath, logger)
+	spectrogram := spectrogram.STFT(wavePath, logger)
+
+	fmt.Println(len(spectrogram), len(spectrogram[0]))
 }

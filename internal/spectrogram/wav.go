@@ -113,22 +113,33 @@ func (parser *wavParser) parseHeader() bool {
 	return true
 }
 
-func (parser *wavParser) NewWindowIter(windowSize int, step int) iter.Seq2[int, []byte] {
+func (parser *wavParser) WindowCount(windowSize int, step int) int {
+	return 1 + (int(parser.wavHeader.dataSize)-2*windowSize)/(2*step)
+
+}
+
+func (parser *wavParser) NewWindowIter(windowSize int, step int) iter.Seq2[int, []float64] {
 	if windowSize > int(parser.wavHeader.dataSize) {
 		panic("window size can`t be bigger than the data size")
 	}
 
-	return func(yield func(int, []byte) bool) {
-		numWindows := 1 + (int(parser.wavHeader.dataSize)-windowSize)/step
+	return func(yield func(int, []float64) bool) {
+		numWindows := parser.WindowCount(windowSize, step)
 
-		window := make([]byte, windowSize)
-		temp := make([]byte, step)
+		buf := make([]byte, 2*windowSize)
+		window := make([]float64, windowSize)
+		temp := make([]float64, step)
 		pos := 0
 		for i := 0; i < numWindows; i++ {
-			_, err := parser.wavFile.Read(window[pos:])
+			_, err := parser.wavFile.Read(buf[2*pos:])
 			if err != nil {
 				parser.logger.With(slog.String("wav_path", parser.wavPath), slog.String("err", err.Error())).Error("Error while reading the wav file")
 				panic("Error while reading the wav file")
+			}
+
+			for j := pos; j < windowSize; j++ {
+				sample := int16(binary.LittleEndian.Uint16(buf[2*j : 2*j+2]))
+				window[j] = float64(sample)
 			}
 
 			if !yield(i, window) {
