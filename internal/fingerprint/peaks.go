@@ -1,11 +1,11 @@
-package fingerfrint
+package fingerprint
 
 import (
 	"math/cmplx"
 )
 
 type Peak struct {
-	Freq int
+	Freq uint16
 	Time float64
 }
 
@@ -27,7 +27,7 @@ func FilterPeaks(spectrogram [][]complex128, timePerColumn float64) []Peak {
 			for freq, c := range colm[peakRange.min:peakRange.max] {
 				mag := cmplx.Abs(c)
 				if mag > maxMag {
-					maxFreq = freq
+					maxFreq = peakRange.min + freq
 					maxMag = mag
 				}
 			}
@@ -45,7 +45,7 @@ func FilterPeaks(spectrogram [][]complex128, timePerColumn float64) []Peak {
 		for peakRangeInd, mag := range maxMagPerRange {
 			if mag > avgMaxMag {
 				peaks = append(peaks, Peak{
-					Freq: maxFreqPerRange[peakRangeInd],
+					Freq: uint16(maxFreqPerRange[peakRangeInd]),
 					Time: timePerColumn * float64(colmInd),
 				})
 			}
