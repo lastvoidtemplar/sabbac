@@ -15,7 +15,7 @@ var ErrInvalidDirPath = errors.New("invalid path to dir")
 var ErrUnSuccessfulDownload = errors.New("unsuccessful download")
 
 type YouTubeDownloader interface {
-	DownloadWav(url string) string
+	DownloadWav(url string) (string, error)
 }
 
 type ytdlpDownloader struct {
@@ -23,7 +23,7 @@ type ytdlpDownloader struct {
 	outputDir string
 }
 
-func NewYtDlpDownload(outputDir string, logger *slog.Logger) (*ytdlpDownloader, error) {
+func NewYtDlpDownload(outputDir string, logger *slog.Logger) (YouTubeDownloader, error) {
 	st, err := os.Stat(outputDir)
 
 	if err != nil {
@@ -43,14 +43,14 @@ func NewYtDlpDownload(outputDir string, logger *slog.Logger) (*ytdlpDownloader, 
 	}, nil
 }
 
-func validateUrl(rawUrl string) bool {
+func ValidateUrl(rawUrl string) bool {
 	u, err := url.ParseRequestURI(rawUrl)
 
 	if err != nil {
 		return false
 	}
 
-	if u.Host == "youtu.be" {
+	if u.Host != "youtu.be" {
 		return false
 	}
 
@@ -58,8 +58,8 @@ func validateUrl(rawUrl string) bool {
 }
 
 func (downloader *ytdlpDownloader) DownloadWav(rawUrl string) (string, error) {
-	if validateUrl(rawUrl) {
-		downloader.logger.With(slog.String("url", rawUrl)).Error("Invalid url")
+	if !ValidateUrl(rawUrl) {
+		downloader.logger.With(slog.String("song_id", rawUrl)).Error("Invalid url")
 		return "", ErrInvalidDownloadUrl
 	}
 
@@ -74,19 +74,19 @@ func (downloader *ytdlpDownloader) DownloadWav(rawUrl string) (string, error) {
 
 	cmdOutput, err := cmd.Output()
 	if err != nil {
-		downloader.logger.With(slog.String("url", rawUrl), slog.String("err", err.Error())).Error("YtDlp failed")
+		downloader.logger.With(slog.String("song_id", rawUrl), slog.String("err", err.Error())).Error("YtDlp failed")
 		return "", err
 	}
 
 	ind1 := bytes.LastIndexByte(cmdOutput[:len(cmdOutput)-1], '\n')
 	if ind1 == -1 {
-		downloader.logger.With(slog.String("url", rawUrl), slog.String("ytdlp_output", string(cmdOutput))).Error("No new line found")
+		downloader.logger.With(slog.String("song_id", rawUrl), slog.String("ytdlp_output", string(cmdOutput))).Error("No new line found")
 		return "", ErrUnSuccessfulDownload
 	}
 
 	ind2 := bytes.LastIndexByte(cmdOutput[:ind1], '\n')
 	if ind2 == -1 {
-		downloader.logger.With(slog.String("url", rawUrl), slog.String("ytdlp_output", string(cmdOutput))).Error("No new line found")
+		downloader.logger.With(slog.String("song_id", rawUrl), slog.String("ytdlp_output", string(cmdOutput))).Error("No new line found")
 		return "", ErrUnSuccessfulDownload
 	}
 
@@ -94,12 +94,12 @@ func (downloader *ytdlpDownloader) DownloadWav(rawUrl string) (string, error) {
 
 	ind3 := bytes.IndexByte(destinationOutput, ':')
 	if ind3 == -1 {
-		downloader.logger.With(slog.String("url", rawUrl), slog.String("dest_output", string(destinationOutput))).Error("No colon found")
+		downloader.logger.With(slog.String("song_id", rawUrl), slog.String("dest_output", string(destinationOutput))).Error("No colon found")
 		return "", ErrUnSuccessfulDownload
 	}
 
 	outputPath := string(destinationOutput[ind3+2:])
-	downloader.logger.With(slog.String("url", rawUrl), slog.String("output_path", outputPath)).Info("Successful audio download")
+	downloader.logger.With(slog.String("song_id", rawUrl), slog.String("output_path", outputPath)).Info("Successful audio download")
 
 	return outputPath, nil
 }

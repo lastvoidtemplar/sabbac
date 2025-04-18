@@ -1,3 +1,5 @@
+.vscode
 venv
 *.wav
 *.jpg
+fingerprints.db*

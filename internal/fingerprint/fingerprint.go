@@ -1,13 +1,13 @@
 package fingerprint
 
 type VideoTimestamp struct {
-	WavPath    string
+	SongId     string
 	AnchorTime uint32
 }
 
 const targetZoneSize = 8
 
-func GenerateFingerprints(wavPath string, peaks []Peak) map[uint32][]VideoTimestamp {
+func GenerateFingerprints(songId string, peaks []Peak) map[uint32][]VideoTimestamp {
 	fingerprints := make(map[uint32][]VideoTimestamp)
 
 	for anchorInd, anchor := range peaks {
@@ -16,13 +16,13 @@ func GenerateFingerprints(wavPath string, peaks []Peak) map[uint32][]VideoTimest
 			_, ok := fingerprints[hash]
 			if ok {
 				fingerprints[hash] = append(fingerprints[hash], VideoTimestamp{
-					WavPath:    wavPath,
+					SongId:     songId,
 					AnchorTime: uint32(anchor.Time * 1000),
 				})
 			} else {
 				t := make([]VideoTimestamp, 0)
 				t = append(t, VideoTimestamp{
-					WavPath:    wavPath,
+					SongId:     songId,
 					AnchorTime: uint32(anchor.Time * 1000),
 				})
 				fingerprints[hash] = t
