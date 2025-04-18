@@ -12,11 +12,11 @@ const (
 )
 
 // Spectogram slice of frequencies for window
-func STFT(wavePath string, logger *slog.Logger) [][]complex128 {
+func STFT(wavePath string, logger *slog.Logger) ([][]complex128, float64) {
 	wavParser, err := newWavParser(wavePath, logger)
 	if err != nil {
 		logger.Error("Couldn`t create wav parser")
-		return nil
+		return nil, 0
 	}
 	defer wavParser.Close()
 
@@ -29,7 +29,9 @@ func STFT(wavePath string, logger *slog.Logger) [][]complex128 {
 		stftRes[i] = fft(sample, 0, len(sample)-1, 1)[:windowSize/2]
 	}
 
-	return stftRes
+	timePerColumn := float64(step) / float64(wavParser.wavHeader.sampleRate)
+
+	return stftRes, timePerColumn
 }
 
 // https://en.wikipedia.org/wiki/Window_function#Hann_and_Hamming_windows

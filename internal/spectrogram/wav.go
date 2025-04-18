@@ -8,9 +8,8 @@ import (
 )
 
 type wavHeader struct {
-	sampleRate    uint32
-	bitsPerSample uint16
-	dataSize      uint32
+	sampleRate uint32
+	dataSize   uint32
 }
 
 type wavParser struct {
@@ -85,7 +84,7 @@ func (parser *wavParser) parseHeader() bool {
 	sampleRate := binary.LittleEndian.Uint32(buf[24:28])
 	//byte rate(28:32) = sample_rate * num_channels * bits_per_sample/8
 	//block align (32:34) = num_channels * bits_per_sample/8
-	bitsPerSample := binary.LittleEndian.Uint16(buf[34:36])
+	//bitsPerSample := binary.LittleEndian.Uint16(buf[34:36])
 
 	//LIST CHUNK between 36 and 70
 
@@ -98,15 +97,13 @@ func (parser *wavParser) parseHeader() bool {
 	dataSize := binary.LittleEndian.Uint32(buf[74:78])
 
 	parser.wavHeader = wavHeader{
-		sampleRate:    sampleRate,
-		bitsPerSample: bitsPerSample,
-		dataSize:      dataSize,
+		sampleRate: sampleRate,
+		dataSize:   dataSize,
 	}
 
 	parser.logger.With(
 		slog.String("wav_path", parser.wavPath),
 		slog.Uint64("sample_rate", uint64(parser.wavHeader.sampleRate)),
-		slog.Uint64("bit_per_sample", uint64(parser.wavHeader.bitsPerSample)),
 		slog.Uint64("data_size", uint64(parser.wavHeader.dataSize)),
 	).Info("The wav header is parse successfully")
 

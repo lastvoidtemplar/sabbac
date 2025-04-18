@@ -2,7 +2,9 @@ package main
 
 import (
 	"fmt"
+	"log/slog"
 
+	"github.com/lastvoidtemplar/sabbac/internal/fingerfrint"
 	"github.com/lastvoidtemplar/sabbac/internal/logger"
 	"github.com/lastvoidtemplar/sabbac/internal/spectrogram"
 )
@@ -21,7 +23,17 @@ func main() {
 	// }
 
 	wavePath := "downloads/SABATON - The Valley Of Death (Official Lyric Video).wav"
-	spectrogram := spectrogram.STFT(wavePath, logger)
+	spectrogr, timePerColumn := spectrogram.STFT(wavePath, logger)
 
-	fmt.Println(len(spectrogram), len(spectrogram[0]))
+	logger.With(
+		slog.String("wav_path", wavePath),
+	).Info("The spectrogram is generate successfully")
+
+	peaks := fingerfrint.FilterPeaks(spectrogr, timePerColumn)
+
+	logger.With(
+		slog.String("wav_path", wavePath),
+	).Info("The peaks are filter successfully")
+
+	fmt.Println(peaks)
 }
